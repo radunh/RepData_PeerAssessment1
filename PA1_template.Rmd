@@ -11,7 +11,7 @@ output:
 
 ```{r Setup the Options for knitr behavior for code chunks}
 require(knitr)
-knitr::opts_chunk$set(echo=TRUE, fig=TRUE)
+knitr::opts_chunk$set(echo=TRUE,fig.path = 'figure/')
 ```
 
 ```{r Load the file(s) and preprocess the data}
