@@ -14,7 +14,7 @@ require(knitr)
 ```
 
 ```r
-knitr::opts_chunk$set(echo=TRUE, fig=TRUE)
+knitr::opts_chunk$set(echo=TRUE,fig.path = 'figure/')
 ```
 
 
@@ -78,7 +78,7 @@ dfday$SumOfStepsPerDay
 hist(dfday$SumOfStepsPerDay, xlab = "Sum of Steps per Day", ylab = "Frequency", main = "Histogram of Sum of Steps per Day")
 ```
 
-![](PA1_template_files/figure-html/Run mean() while ignoring NA values-1.png) 
+![](figure/Run mean() while ignoring NA values-1.png) 
 
 ```r
 #get the mean steps per day
@@ -115,7 +115,7 @@ avginterval <- aggregate(x=list(avgsteps = df$steps), by = list(interval = df$in
 ggplot(data=avginterval, aes(x=interval, y = avgsteps)) + geom_line() + xlab("5 Minute Interval") + ylab("Average of Steps per Interval") + ggtitle("Average Daily Pattern")
 ```
 
-![](PA1_template_files/figure-html/find and plot the daily pattern-1.png) 
+![](figure/find and plot the daily pattern-1.png) 
 
 
 ## Imputing missing values
@@ -146,7 +146,7 @@ names(dfmday)[2]="SumOfStepsPerDay"
 hist(dfmday$SumOfStepsPerDay, xlab = "Sum of Steps per Day", ylab = "Frequency", main = "Histogram of Sum of Steps per Day with filled NA values")
 ```
 
-![](PA1_template_files/figure-html/replacing missing values-1.png) 
+![](figure/replacing missing values-1.png) 
 
 ```r
 #get the mean steps per day
@@ -227,4 +227,4 @@ dfmDay <- aggregate(dfms, list(interval = dfms$interval, week = dfms$week), FUN 
 ggplot(dfmDay, aes(x = interval, y = steps)) + geom_line() + facet_wrap(~week, nrow=2) + xlab("Interval") + ylab("Number of steps") + ggtitle("Average Daily Pattern")
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-4-1.png) 
+![](figure/unnamed-chunk-4-1.png) 
