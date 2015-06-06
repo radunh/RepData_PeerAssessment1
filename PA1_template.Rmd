@@ -1,5 +1,6 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
+author: "Radu Craioveanu"
 output: 
   html_document:
     keep_md: true
@@ -8,18 +9,110 @@ output:
 
 ## Loading and preprocessing the data
 
+```{r Setup the Options for knitr behavior for code chunks}
+require(knitr)
+knitr::opts_chunk$set(echo=TRUE, fig=TRUE)
+```
+
+```{r Load the file(s) and preprocess the data}
+
+dataPath <- "." 
+#download dataset if not there already
+fileName <- "activity.zip" 
+filePath <- paste(dataPath,fileName,sep="/") 
+if (!file.exists(filePath)) {  
+  fileURL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivit.zip" 
+  download.file(url=fileURL,destfile=filePath,method="curl") 
+  #Extract the data set files from the archive
+  unzip(zipfile=filePath, exdir=dataPath) 
+}
+#read the file now into a data frame
+df <- read.csv("activity.csv")
+
+```
+
 
 
 ## What is mean total number of steps taken per day?
+```{r Run mean() while ignoring NA values}
+require(dplyr)
+#calculate the total number of steps taken per day 
+dfday <- summarise(group_by(df,date), sum(steps))
+names(dfday)[2] <- "SumOfStepsPerDay"
+#remove NA
+dfday <- na.omit(dfday)
+#list the aray of Steps
+dfday$SumOfStepsPerDay
+#create a histogram of the numbers of steps taken each day
+hist(dfday$SumOfStepsPerDay, xlab = "Sum of Steps per Day", ylab = "Frequency", main = "Histogram of Sum of Steps per Day")
+#get the mean steps per day
+mean(dfday$SumOfStepsPerDay, na.rm=TRUE)
+#get the median steps per day
+median(dfday$SumOfStepsPerDay, na.rm=TRUE)
+
+```
 
 
 
 ## What is the average daily activity pattern?
-
+```{r find and plot the daily pattern}
+require(ggplot2)
+avginterval <- aggregate(x=list(avgsteps = df$steps), by = list(interval = df$interval), FUN = mean, na.rm = TRUE)
+ggplot(data=avginterval, aes(x=interval, y = avgsteps)) + geom_line() + xlab("5 Minute Interval") + ylab("Average of Steps per Interval") + ggtitle("Average Daily Pattern")
+```
 
 
 ## Imputing missing values
+Note that there are a number of days/intervals where there are missing values (coded as NA). The presence of missing days may introduce bias into some calculations or summaries of the data.  We will replace the missing values with the average for that interval
+```{r replacing missing values}
+#calculate the number of missing rows with NA
+missList <- is.na(df$steps)
+#FALSE and TRUE count, TRUE being the number of missing values
+table(missList)
+#create a merged list from the original data and the average interval data so that we can then replace the NA with the average data
+dfm <- merge(df,avginterval,by.x = "interval", by.y = "interval", all)
+for(i in 1:nrow(dfm) ) { if(is.na(dfm[i,"steps"])) dfm[i,"steps"] <- dfm[i,"avgsteps"]}
+#now aggregate back to daily averages
+dfmday <- summarise(group_by(dfm,date), sum(steps))
+#change the sum column name 
+names(dfmday)[2]="SumOfStepsPerDay"
+#now run the histogram
+hist(dfmday$SumOfStepsPerDay, xlab = "Sum of Steps per Day", ylab = "Frequency", main = "Histogram of Sum of Steps per Day with filled NA values")
+#get the mean steps per day
+mean(dfmday$SumOfStepsPerDay)
+#get the median steps per day
+median(dfmday$SumOfStepsPerDay)
+```
+#The impact of replacing NA values with the average Steps per index is minimal
+```{r}
+#mean with NA replaced
+mean(dfday$SumOfStepsPerDay)
+#mean with NA removed
+mean(dfmday$SumOfStepsPerDay)
+#median with NA replaced
+median(dfmday$SumOfStepsPerDay)
+#median with NA removed
+median(dfday$SumOfStepsPerDay)
 
-
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+dfms <- dfm
+mydates <- as.Date(dfms$date)
+weekends <- weekdays(mydates) %in% c("Saturday", "Sunday")
+dfms <- transform(dfms, week = ifelse(weekends ,'weekend', 'weekday'))
+dfms$week <- as.factor(dfms$week)
+```
+
+#Graph the Average Steps per day on Weekdays and Weekends.
+
+```{r, warning = FALSE}
+#clean up the NAs
+dfms <- na.omit(dfms)
+dfmDay <- aggregate(dfms, list(interval = dfms$interval, week = dfms$week), FUN = mean, na.rm = TRUE)
+```
+
+```{r}
+ggplot(dfmDay, aes(x = interval, y = steps)) + geom_line() + facet_wrap(~week, nrow=2) + xlab("Interval") + ylab("Number of steps") + ggtitle("Average Daily Pattern")
+```
